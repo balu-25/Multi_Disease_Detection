@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            height: 100vh;
+            background:#000080;
+            padding-top: 100px;
+        }
+
+        .container {
+            text-align: center;
+            color: white;
+        }
+
+        button {
+            width:350px;
+            height:80px;
+            padding: 35px 35px;
+            margin: 10px;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            background: #FFD700;
+            color: black;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: green;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="color:white; font-family:Arial; font-size:36px;">
+        <span style="color:red;">✚</span> Select The Disease You Want To Detect <span style="color:red;">✚</span>
+    </h1>
+
+    <button onclick="window.location.href='/pneumonia'">Pneumonia Detection</button>
+    <button onclick="window.location.href='/brain'">Brain Tumor Detection</button>
+    <button onclick="window.location.href='/kidney'">Kidney Stone Detection</button>
+    <br></br>
+    <button onclick="window.location.href='/eye'">Eye Disease Detection</button>
+    <button onclick="window.location.href='/heart'">Heart Disease Detection</button>
+    <button onclick="window.location.href='/lungcancer'">Lung Cancer Detection</button>
+    <h1>Analyze Reports</h1>
+</div>
+
+</body>
+</html>

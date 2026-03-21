@@ -1,28 +1,29 @@
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
+from fpdf import FPDF
 import tempfile
 
-def create_report(input_img, output_img, label, confidence):
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+def generate_pdf(user_image, pred_image, label, confidence):
+    pdf = FPDF()
+    pdf.add_page()
 
-    doc = SimpleDocTemplate(temp_file.name)
-    styles = getSampleStyleSheet()
+    pdf.set_font("Arial", size=14)
+    pdf.cell(200, 10, txt="Medical Diagnosis Report", ln=True)
 
-    elements = []
+    pdf.ln(10)
+    pdf.cell(200, 10, txt=f"Prediction: {label}", ln=True)
+    pdf.cell(200, 10, txt=f"Confidence: {confidence:.2f}", ln=True)
 
-    elements.append(Paragraph("Medical Diagnosis Report", styles['Title']))
-    elements.append(Spacer(1, 20))
+    # Save temp images
+    temp1 = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    temp2 = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
 
-    elements.append(Paragraph(f"Prediction: {label}", styles['Normal']))
-    elements.append(Paragraph(f"Confidence: {confidence:.2f}", styles['Normal']))
-    elements.append(Spacer(1, 20))
+    user_image.save(temp1.name)
+    pred_image.save(temp2.name)
 
-    elements.append(Paragraph("Input Image:", styles['Heading2']))
-    elements.append(Image(input_img, width=200, height=200))
+    pdf.ln(10)
+    pdf.image(temp1.name, x=10, w=80)
+    pdf.image(temp2.name, x=110, w=80)
 
-    elements.append(Paragraph("Annotated Image:", styles['Heading2']))
-    elements.append(Image(output_img, width=200, height=200))
+    pdf_path = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf").name
+    pdf.output(pdf_path)
 
-    doc.build(elements)
-
-    return temp_file.name
+    return pdf_path

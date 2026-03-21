@@ -1,6 +1,9 @@
 import streamlit as st
+from PIL import Image
+from utils.predict import predict_image, pneumonia_model, pneumonia_classes
+from utils.report import generate_pdf
 
-st.set_page_config(page_title="AI Healthcare", layout="centered")
+st.set_page_config(page_title="Pneumonia")
 
 # -------- DARK THEME STYLE & NAVBAR --------
 st.markdown("""
@@ -14,19 +17,19 @@ st.markdown("""
 
     /* App background */
     .stApp {
-        background-color: #0b1f3a; /* Dark blue */
+        background-color: #0b1f3a;
         color: #ffffff;
     }
 
     /* Headings */
     h1, h2, h3 {
-        color: #00c6ff; /* Cyan-blue headings */
+        color: #00c6ff;
         text-align: center;
     }
 
     /* Navbar buttons */
     div.stButton > button {
-        background-color: #00509e; /* Deep blue */
+        background-color: #00509e;
         color: #ffffff;
         border-radius: 8px;
         height: 3em;
@@ -34,18 +37,8 @@ st.markdown("""
         font-weight: bold;
     }
     div.stButton > button:hover {
-        background-color: #0077cc; /* Hover effect */
+        background-color: #0077cc;
         color: #ffffff;
-    }
-
-    /* Markdown text */
-    p, span, li {
-        color: #ffffff;
-    }
-
-    /* Horizontal rule */
-    hr {
-        border: 1px solid #00c6ff;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -70,13 +63,25 @@ with col4:
         st.switch_page("pages/treatment.py")
 
 st.markdown("---")
-st.title("🩺 AI Healthcare Diagnosis System")
+st.title("🫁 Pneumonia Detection")
 
-st.markdown("""
-## 🚀 Welcome
+# -------- FILE UPLOADER & PREDICTION --------
+file = st.file_uploader("Upload Chest X-ray", type=["jpg", "png", "jpeg"])
 
-This system helps in:
-- 🫁 Pneumonia Detection
-- 🧬 Lung Cancer Detection
-- 💊 Treatment Recommendations
-""")
+if file:
+    img = Image.open(file)
+    st.image(img, use_container_width=True)
+
+    with st.spinner("Analyzing..."):
+        label, conf, out_img = predict_image(pneumonia_model, img, pneumonia_classes)
+
+    st.success(f"Prediction: {label}")
+    st.info(f"Confidence: {conf:.2%}")
+    st.progress(int(conf * 100))
+
+    st.image(out_img, use_container_width=True)
+
+    if st.button("Download Report"):
+        pdf = generate_pdf(img, out_img, label, conf)
+        with open(pdf, "rb") as f:
+            st.download_button("Download PDF", f)

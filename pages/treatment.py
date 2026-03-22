@@ -85,37 +85,30 @@ with col4:
 st.markdown("---")
 st.title("💊 Book Appointment")
 
-# -------- INPUTS --------
-name = st.text_input("Enter Name")
-email = st.text_input("Enter Email")
-phone = st.text_input("Enter Phone Number")
+# -------- FORM (CRITICAL FIX) --------
+with st.form("appointment_form"):
 
-disease = st.selectbox("Select Disease", ["Pneumonia", "Lung Cancer"])
+    name = st.text_input("Enter Name")
+    email = st.text_input("Enter Email")
+    phone = st.text_input("Enter Phone Number")
 
-# -------- HOSPITAL SELECTION --------
-hospital = None
-if disease == "Pneumonia":
-    hospital = st.selectbox(
-        "Select Hospital",
-        ["Omni Hospital (10:00 AM)", "Kamineni Hospital (2:00 PM)"]
-    )
-else:
-    hospital = st.selectbox(
-        "Select Hospital",
-        ["Yashoda Hospital (11:00 AM)", "Apollo Hospital (4:00 PM)"]
-    )
+    disease = st.selectbox("Select Disease", ["Pneumonia", "Lung Cancer"])
 
-appointment_date = st.date_input("Select Appointment Date", min_value=date.today())
+    if disease == "Pneumonia":
+        hospital = st.selectbox(
+            "Select Hospital",
+            ["Omni Hospital (10:00 AM)", "Kamineni Hospital (2:00 PM)"]
+        )
+    else:
+        hospital = st.selectbox(
+            "Select Hospital",
+            ["Yashoda Hospital (11:00 AM)", "Apollo Hospital (4:00 PM)"]
+        )
 
-# -------- FILE UPLOAD FIX --------
-report = st.file_uploader("Upload Report (PDF)", type=["pdf"])
+    appointment_date = st.date_input("Select Appointment Date", min_value=date.today())
+    report = st.file_uploader("Upload Report (PDF)", type=["pdf"])
 
-file_data = None
-filename = None
-
-if report is not None:
-    file_data = report.read()
-    filename = report.name
+    submit = st.form_submit_button("Submit Appointment")
 
 # -------- EMAIL FUNCTION --------
 def send_email(to_email, subject, body, file_data=None, filename=None):
@@ -148,8 +141,8 @@ hospital_emails = {
     "Apollo Hospital (4:00 PM)": "apollo@email.com"
 }
 
-# -------- SUBMIT BUTTON --------
-if st.button("Submit Appointment"):
+# -------- SUBMIT LOGIC --------
+if submit:
 
     if not name or not email or not phone or not hospital:
         st.error("Please fill all details")
@@ -157,6 +150,9 @@ if st.button("Submit Appointment"):
     else:
         try:
             hospital_email = hospital_emails[hospital]
+
+            file_data = report.read() if report else None
+            filename = report.name if report else None
 
             # Email to Hospital
             hospital_body = f"""

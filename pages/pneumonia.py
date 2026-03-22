@@ -82,6 +82,11 @@ if file:
     st.image(out_img, use_container_width=True)
 
     if st.button("Download Report"):
-        pdf = generate_pdf(img, out_img, label, conf)
-        with open(pdf, "rb") as f:
-            st.download_button("Download PDF", f)
+        pdf_bytes = generate_pdf(img, out_img, label, conf)
+
+        st.download_button(
+            label="Download PDF",
+            data=pdf_bytes,
+            file_name="medical_report.pdf",
+            mime="application/pdf"
+        )

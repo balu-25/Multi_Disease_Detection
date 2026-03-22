@@ -8,26 +8,22 @@ st.set_page_config(page_title="Treatment")
 # -------- DARK THEME STYLE --------
 st.markdown("""
     <style>
-    /* Hide sidebar and default menu */
     section[data-testid="stSidebar"] {display: none;}
     button[kind="header"] {display: none;}
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
 
-    /* App background */
     .stApp {
-        background-color: #0b1f3a;  /* Dark blue */
-        color: #ffffff;              /* White text */
+        background-color: #0b1f3a;
+        color: #ffffff;
     }
 
-    /* Headings */
     h1, h2, h3 {
-        color: #00c6ff;              /* Cyan-blue for headings */
+        color: #00c6ff;
         text-align: center;
     }
 
-    /* Streamlit input fields and selectboxes */
     div.stTextInput > label, 
     div.stTextInput > div > input,
     div.stSelectbox > label, 
@@ -37,35 +33,30 @@ st.markdown("""
     div.stFileUploader > label,
     div.stFileUploader > div > div > input {
         color: #ffffff;
-        background-color: #1a2a4c;   /* Slightly lighter dark blue */
+        background-color: #1a2a4c;
     }
 
-    /* Buttons */
     div.stButton > button {
-        background-color: #00509e;  /* Deep blue */
+        background-color: #00509e;
         color: #ffffff;
         border-radius: 8px;
         height: 3em;
         width: 100%;
         font-weight: bold;
     }
+
     div.stButton > button:hover {
         background-color: #0077cc;
-        color: #ffffff;
     }
 
-    /* Markdown text */
     p, span {
         color: #ffffff;
     }
 
-    /* File uploader drag area */
     .stFileUploader > div > div {
         background-color: #1a2a4c !important;
-        color: #ffffff !important;
     }
 
-    /* Horizontal rule */
     hr {
         border: 1px solid #00c6ff;
     }
@@ -94,7 +85,7 @@ with col4:
 st.markdown("---")
 st.title("💊 Book Appointment")
 
-# -------- FORM --------
+# -------- INPUTS --------
 name = st.text_input("Enter Name")
 email = st.text_input("Enter Email")
 phone = st.text_input("Enter Phone Number")
@@ -108,19 +99,28 @@ if disease == "Pneumonia":
         "Select Hospital",
         ["Omni Hospital (10:00 AM)", "Kamineni Hospital (2:00 PM)"]
     )
-elif disease == "Lung Cancer":
+else:
     hospital = st.selectbox(
         "Select Hospital",
         ["Yashoda Hospital (11:00 AM)", "Apollo Hospital (4:00 PM)"]
     )
 
 appointment_date = st.date_input("Select Appointment Date", min_value=date.today())
+
+# -------- FILE UPLOAD FIX --------
 report = st.file_uploader("Upload Report (PDF)", type=["pdf"])
 
+file_data = None
+filename = None
+
+if report is not None:
+    file_data = report.read()
+    filename = report.name
+
 # -------- EMAIL FUNCTION --------
-def send_email(to_email, subject, body, attachment=None):
+def send_email(to_email, subject, body, file_data=None, filename=None):
     sender_email = "pramidibalu25@gmail.com"
-    sender_password = "fxjjvgkqupszcxqh"  # App Password
+    sender_password = "fxjjvgkqupszcxqh"
 
     msg = EmailMessage()
     msg['Subject'] = subject
@@ -128,12 +128,12 @@ def send_email(to_email, subject, body, attachment=None):
     msg['To'] = to_email
     msg.set_content(body)
 
-    if attachment:
+    if file_data:
         msg.add_attachment(
-            attachment.read(),
+            file_data,
             maintype='application',
             subtype='pdf',
-            filename=attachment.name
+            filename=filename
         )
 
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
@@ -150,8 +150,10 @@ hospital_emails = {
 
 # -------- SUBMIT BUTTON --------
 if st.button("Submit Appointment"):
+
     if not name or not email or not phone or not hospital:
         st.error("Please fill all details")
+
     else:
         try:
             hospital_email = hospital_emails[hospital]
@@ -167,9 +169,16 @@ Disease: {disease}
 Hospital: {hospital}
 Date: {appointment_date}
 """
-            send_email(hospital_email, "New Patient Appointment", hospital_body, report)
 
-            # Confirmation Email to User
+            send_email(
+                hospital_email,
+                "New Patient Appointment",
+                hospital_body,
+                file_data,
+                filename
+            )
+
+            # Email to User
             user_body = f"""
 Hello {name},
 
@@ -182,6 +191,7 @@ Please carry your reports.
 
 Thank you!
 """
+
             send_email(email, "Appointment Confirmation", user_body)
 
             st.success("✅ Appointment Booked & Emails Sent!")

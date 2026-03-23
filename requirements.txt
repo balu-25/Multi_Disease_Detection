@@ -3,3 +3,4 @@ ultralytics
 pillow
 fpdf
 torch
+yagmail

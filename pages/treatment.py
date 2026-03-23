@@ -2,6 +2,7 @@ import streamlit as st
 import smtplib
 from email.message import EmailMessage
 from datetime import date
+import traceback
 
 st.set_page_config(page_title="Treatment")
 
@@ -85,7 +86,45 @@ with col4:
 st.markdown("---")
 st.title("💊 Book Appointment")
 
-# -------- FORM (CRITICAL FIX) --------
+# -------- EMAIL FUNCTION --------
+def send_email(to_email, subject, body, attachment=None):
+    sender_email = "pramidibalu25@gmail.com"
+    sender_password = "fxjjvgkqupszcxqh"
+
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg.set_content(body)
+
+    if attachment:
+        msg.add_attachment(
+            attachment.read(),
+            maintype='application',
+            subtype='pdf',
+            filename=attachment.name
+        )
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(sender_email, sender_password)
+            smtp.send_message(msg)
+
+    except Exception as e:
+        st.error("❌ Email sending failed")
+        st.text(traceback.format_exc())
+        raise e
+
+# -------- HOSPITAL EMAIL MAP --------
+hospital_emails = {
+    "Omni Hospital (10:00 AM)": "omnihospital@email.com",
+    "Kamineni Hospital (2:00 PM)": "kamineni@email.com",
+    "Yashoda Hospital (11:00 AM)": "yashoda@email.com",
+    "Apollo Hospital (4:00 PM)": "apollo@email.com"
+}
+
+# -------- FORM --------
 with st.form("appointment_form"):
 
     name = st.text_input("Enter Name")
@@ -110,49 +149,14 @@ with st.form("appointment_form"):
 
     submit = st.form_submit_button("Submit Appointment")
 
-# -------- EMAIL FUNCTION --------
-def send_email(to_email, subject, body, file_data=None, filename=None):
-    sender_email = "pramidibalu25@gmail.com"
-    sender_password = "fxjjvgkqupszcxqh"
-
-    msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg.set_content(body)
-
-    if file_data:
-        msg.add_attachment(
-            file_data,
-            maintype='application',
-            subtype='pdf',
-            filename=filename
-        )
-
-    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-        smtp.login(sender_email, sender_password)
-        smtp.send_message(msg)
-
-# -------- HOSPITAL EMAIL MAP --------
-hospital_emails = {
-    "Omni Hospital (10:00 AM)": "omnihospital@email.com",
-    "Kamineni Hospital (2:00 PM)": "kamineni@email.com",
-    "Yashoda Hospital (11:00 AM)": "yashoda@email.com",
-    "Apollo Hospital (4:00 PM)": "apollo@email.com"
-}
-
 # -------- SUBMIT LOGIC --------
 if submit:
-
     if not name or not email or not phone or not hospital:
         st.error("Please fill all details")
 
     else:
         try:
             hospital_email = hospital_emails[hospital]
-
-            file_data = report.read() if report else None
-            filename = report.name if report else None
 
             # Email to Hospital
             hospital_body = f"""
@@ -165,14 +169,7 @@ Disease: {disease}
 Hospital: {hospital}
 Date: {appointment_date}
 """
-
-            send_email(
-                hospital_email,
-                "New Patient Appointment",
-                hospital_body,
-                file_data,
-                filename
-            )
+            send_email(hospital_email, "New Patient Appointment", hospital_body, report)
 
             # Email to User
             user_body = f"""
@@ -187,7 +184,6 @@ Please carry your reports.
 
 Thank you!
 """
-
             send_email(email, "Appointment Confirmation", user_body)
 
             st.success("✅ Appointment Booked & Emails Sent!")

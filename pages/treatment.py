@@ -1,8 +1,7 @@
 import streamlit as st
-import smtplib
-from email.message import EmailMessage
+import yagmail
+import tempfile
 from datetime import date
-import traceback
 
 st.set_page_config(page_title="Treatment")
 
@@ -86,34 +85,36 @@ with col4:
 st.markdown("---")
 st.title("💊 Book Appointment")
 
-# -------- EMAIL FUNCTION --------
+# -------- EMAIL FUNCTION (YAGMAIL) --------
 def send_email(to_email, subject, body, attachment=None):
     sender_email = "pramidibalu25@gmail.com"
-    sender_password = "fxjjvgkqupszcxqh"
-
-    msg = EmailMessage()
-    msg['Subject'] = subject
-    msg['From'] = sender_email
-    msg['To'] = to_email
-    msg.set_content(body)
-
-    if attachment:
-        msg.add_attachment(
-            attachment.read(),
-            maintype='application',
-            subtype='pdf',
-            filename=attachment.name
-        )
+    sender_password = "fxjjvgkqupszcxqh"  # App Password
 
     try:
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=10) as smtp:
-            smtp.starttls()
-            smtp.login(sender_email, sender_password)
-            smtp.send_message(msg)
+        yag = yagmail.SMTP(user=sender_email, password=sender_password)
+
+        if attachment:
+            # Save uploaded file temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                tmp.write(attachment.read())
+                tmp_path = tmp.name
+
+            yag.send(
+                to=to_email,
+                subject=subject,
+                contents=body,
+                attachments=tmp_path
+            )
+        else:
+            yag.send(
+                to=to_email,
+                subject=subject,
+                contents=body
+            )
 
     except Exception as e:
         st.error("❌ Email sending failed")
-        st.text(traceback.format_exc())
+        st.text(str(e))
         raise e
 
 # -------- HOSPITAL EMAIL MAP --------
